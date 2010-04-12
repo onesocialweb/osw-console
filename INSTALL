@@ -1,0 +1,66 @@
+1. Pre requisite
+================
+
+You need a Java 6 Runtime environment to execute the console.
+You also need the Ant build tool to compile from sources.
+
+2. Compile
+===============
+Executing the ant build script should be enough. Just type 'ant' from the root.
+
+2. Execute
+===============
+Just execute the jar file provided in this package:
+java -jar osw-console.jar
+
+3. Usage
+==============
+
+In the console, type /help for a list of available commands. On the prompt, you can:
+
+- execute a command by prefixing it with a / (e.g. /connect server.com)
+- update your status by typing it and pressing the Enter key
+
+4. Example flow
+===============
+
+# Connect to the server
+/connect onesocial.me
+
+# Login 
+/login eschnou
+
+# View the activities of another user
+/activities alarwd@vodafonernd.com
+
+# Subscribe to a user (equivalent of 'follow' in twitter world)
+/subscribe alardw@vodafonernd.com
+
+# View a list of subscriptions (who you are following)
+/subscriptions
+
+# View a list of subscribers (who is following you)
+/subscribers
+
+# View the profile of another user
+/profile alardw@vodafonernd.com
+
+# Post your first status update
+Hello, World
+
+# Shout a message (public) towards another user (who does not have to follow you)
+/shout alardw@vodafonernd.com
+Message: Hi dude !
+
+# Go back to your inbox
+/inbox
+
+# Change your profile avatar, name and bio
+/set photo
+/set fn
+/set note
+
+
+
+ 
+
