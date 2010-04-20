@@ -144,8 +144,8 @@ public class ConsoleClient implements InboxEventHandler {
 			new Command("inbox", "", "shows the current user inbox"),
 			new Command("activities", "[jid]", "shows the activities of the current user or another jid"),
 			new Command("subscribe", "jid", "subscribe to the givn jid activity stream"),
-			new Command("subscriptions", "", "list of users the current user is subscribed to (following)"), 
-			new Command("subscribers", "", "list of users subscribed to current user (followers)"),
+			new Command("subscriptions", "[jid]", "list of users the current user is subscribed to (following)"), 
+			new Command("subscribers", "[jid]", "list of users subscribed to current user (followers)"),
 			new Command("unsubscribe", "jid", "unsubscribe from the given jid activity stream"), 
 			new Command("relations", "[jid]", "shows the relations of the current user or another jid"),
  			new Command("profile", "[jid]", "view the profile of the current user or another jid"), 
@@ -356,13 +356,17 @@ public class ConsoleClient implements InboxEventHandler {
 				}
 			} else if (cmd.equals("subscriptions")) {
 				if (args.size() == 0) {
-					subscriptions();
+					subscriptions(bareJid);
+				} else if (args.size() == 1) {
+					subscriptions(args.get(0));
 				} else {
 					badArgs(cmd);
 				}
 			} else if (cmd.equals("subscribers")) {
 				if (args.size() == 0) {
-					subscribers();
+					subscribers(bareJid);
+				} else if (args.size() == 1) {
+					subscribers(args.get(0));
 				} else {
 					badArgs(cmd);
 				}
@@ -578,11 +582,11 @@ public class ConsoleClient implements InboxEventHandler {
 		}
 	}
 	
-	private void subscriptions() throws ConnectionRequired, AuthenticationRequired {
+	private void subscriptions(String jid) throws ConnectionRequired, AuthenticationRequired {
 		try {
-			List<String> subscriptions = service.getSubscriptions();
+			List<String> subscriptions = service.getSubscriptions(jid);
 			if (subscriptions != null && subscriptions.size() > 0) {
-				render("Users you are subscribed to", subscriptions);
+				render("Subscriptions of " + jid, subscriptions);
 			}
 		} catch (RequestException e) {
 			// TODO Auto-generated catch block
@@ -590,11 +594,11 @@ public class ConsoleClient implements InboxEventHandler {
 		}
 	}
 	
-	private void subscribers() throws ConnectionRequired, AuthenticationRequired {
+	private void subscribers(String jid) throws ConnectionRequired, AuthenticationRequired {
 		try {
-			List<String> subscribers = service.getSubscribers();
+			List<String> subscribers = service.getSubscribers(jid);
 			if (subscribers != null && subscribers.size() > 0) { 
-				render("Users subscribed to you", subscribers);
+				render("Subscribers to " + jid, subscribers);
 			}
 		} catch (RequestException e) {
 			// TODO Auto-generated catch block
