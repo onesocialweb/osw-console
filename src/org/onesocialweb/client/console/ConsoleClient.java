@@ -63,11 +63,15 @@ import org.onesocialweb.model.relation.DefaultRelationFactory;
 import org.onesocialweb.model.relation.Relation;
 import org.onesocialweb.model.relation.RelationFactory;
 import org.onesocialweb.model.vcard4.DefaultVCard4Factory;
+import org.onesocialweb.model.vcard4.EmailField;
 import org.onesocialweb.model.vcard4.Field;
 import org.onesocialweb.model.vcard4.FullNameField;
 import org.onesocialweb.model.vcard4.NoteField;
 import org.onesocialweb.model.vcard4.PhotoField;
 import org.onesocialweb.model.vcard4.Profile;
+import org.onesocialweb.model.vcard4.TelField;
+import org.onesocialweb.model.vcard4.TimeZoneField;
+import org.onesocialweb.model.vcard4.URLField;
 import org.onesocialweb.model.vcard4.VCard4Factory;
 import org.onesocialweb.model.vcard4.exception.CardinalityException;
 import org.onesocialweb.model.vcard4.exception.UnsupportedFieldException;
@@ -702,7 +706,71 @@ public class ConsoleClient implements InboxEventHandler {
 			} catch (CardinalityException e) {
 				e.printStackTrace();
 			}
-		}
+		}  else if (key.equals(URLField.NAME)) {
+			String value = reader.readLine("Url :");
+			Field field = profileFactory.url(value);
+			field.setAclRules(defaultRules);
+			
+			if (profile.hasField(URLField.NAME)) {
+				profile.removeField(profile.getField(URLField.NAME));
+			}
+			
+			try {
+				profile.addField(field);
+			} catch (UnsupportedFieldException e) {
+				e.printStackTrace();
+			} catch (CardinalityException e) {
+				e.printStackTrace();
+			}
+		}  else if (key.equals(TimeZoneField.NAME)) {
+			String value = reader.readLine("TimeZone :");
+			Field field = profileFactory.timeZone(value);
+			field.setAclRules(defaultRules);
+			
+			if (profile.hasField(TimeZoneField.NAME)) {
+				profile.removeField(profile.getField(TimeZoneField.NAME));
+			}
+			
+			try {
+				profile.addField(field);
+			} catch (UnsupportedFieldException e) {
+				e.printStackTrace();
+			} catch (CardinalityException e) {
+				e.printStackTrace();
+			}
+		} else if (key.equals(EmailField.NAME)) {
+			String value = reader.readLine("Email :");
+			Field field = profileFactory.email(value);
+			field.setAclRules(defaultRules);
+			
+			if (profile.hasField(EmailField.NAME)) {
+				profile.removeAll(EmailField.NAME);
+			}
+			
+			try {
+				profile.addField(field);
+			} catch (UnsupportedFieldException e) {
+				e.printStackTrace();
+			} catch (CardinalityException e) {
+				e.printStackTrace();
+			}
+		}  else if (key.equals(TelField.NAME)) {
+			String value = reader.readLine("Tel :");
+			Field field = profileFactory.tel(value);
+			field.setAclRules(defaultRules);
+			
+			if (profile.hasField(TelField.NAME)) {
+				profile.removeAll(TelField.NAME);
+			}
+			
+			try {
+				profile.addField(field);
+			} catch (UnsupportedFieldException e) {
+				e.printStackTrace();
+			} catch (CardinalityException e) {
+				e.printStackTrace();
+			}
+		}  			
 		
 		try {
 			service.setProfile(profile);
