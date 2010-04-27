@@ -451,6 +451,8 @@ public class ConsoleClient implements InboxEventHandler {
 
 	private void connect(String server, Integer port) {
 		try {
+			service.setCompressionEnabled(false);
+			service.setReconnectionAllowed(true);
 			service.connect(server, port, null);
 		} catch (ConnectionException e) {
 			e.printStackTrace();
