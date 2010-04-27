@@ -28,9 +28,12 @@ package org.onesocialweb.client.console;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -62,6 +65,7 @@ import org.onesocialweb.model.atom.DefaultAtomFactory;
 import org.onesocialweb.model.relation.DefaultRelationFactory;
 import org.onesocialweb.model.relation.Relation;
 import org.onesocialweb.model.relation.RelationFactory;
+import org.onesocialweb.model.vcard4.BirthdayField;
 import org.onesocialweb.model.vcard4.DefaultVCard4Factory;
 import org.onesocialweb.model.vcard4.EmailField;
 import org.onesocialweb.model.vcard4.Field;
@@ -674,7 +678,30 @@ public class ConsoleClient implements InboxEventHandler {
 			} catch (CardinalityException e) {
 				e.printStackTrace();
 			}
-		} else if (key.equals(FullNameField.NAME)) {
+		} else if (key.equals(BirthdayField.NAME)) {
+			String value = reader.readLine("Birthday :");
+			Field field = profileFactory.birthday();
+			try {
+				Date date=new SimpleDateFormat("dd/MM/yyyy").parse(value);
+				 field = profileFactory.birthday(date);
+			}catch (ParseException e)
+			{			
+			}
+			
+			field.setAclRules(defaultRules);
+			
+			if (profile.hasField(BirthdayField.NAME)) {
+				profile.removeField(profile.getField(BirthdayField.NAME));
+			}
+			
+			try {
+				profile.addField(field);
+			} catch (UnsupportedFieldException e) {
+				e.printStackTrace();
+			} catch (CardinalityException e) {
+				e.printStackTrace();
+			}
+		}	else if (key.equals(FullNameField.NAME)) {
 			String value = reader.readLine("Display name :");
 			Field field = profileFactory.fullname(value);
 			field.setAclRules(defaultRules);
@@ -690,7 +717,8 @@ public class ConsoleClient implements InboxEventHandler {
 			} catch (CardinalityException e) {
 				e.printStackTrace();
 			}
-		}  else if (key.equals(NoteField.NAME)) {
+		} 
+		else if (key.equals(NoteField.NAME)) {
 			String value = reader.readLine("Bio :");
 			Field field = profileFactory.note(value);
 			field.setAclRules(defaultRules);
