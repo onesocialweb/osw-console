@@ -61,6 +61,7 @@ import org.onesocialweb.model.activity.ActivityObject;
 import org.onesocialweb.model.activity.ActivityVerb;
 import org.onesocialweb.model.activity.DefaultActivityFactory;
 import org.onesocialweb.model.atom.AtomFactory;
+import org.onesocialweb.model.atom.AtomPerson;
 import org.onesocialweb.model.atom.DefaultAtomFactory;
 import org.onesocialweb.model.relation.DefaultRelationFactory;
 import org.onesocialweb.model.relation.Relation;
@@ -162,6 +163,7 @@ public class ConsoleClient implements InboxEventHandler {
 			new Command("clear", "key", "remove all entries with given key from the profile"),
 			new Command("relation", "[add|update] [id]", "add or update a relation"),
 			new Command("upload", "", "display an upload token"),
+			new Command("delete", "", "delete the last activity posted by this user"),
 			new Command("quit", "", "quit the client"));
 
 	/**
@@ -411,6 +413,12 @@ public class ConsoleClient implements InboxEventHandler {
 			} else if (cmd.equals("privacy")) {
 				if (args.size() == 0) {
 					privacy();
+				} else {
+					badArgs(cmd);
+				}
+			}else if (cmd.equals("delete")) {
+				if (args.size() == 0) {
+					delete();
 				} else {
 					badArgs(cmd);
 				}
@@ -857,28 +865,27 @@ public class ConsoleClient implements InboxEventHandler {
 
 	}
 	
-	private void updateStatus(String message) throws ConnectionRequired, AuthenticationRequired {
+		private void updateStatus(String message) throws ConnectionRequired, AuthenticationRequired {
+			if (message == null || message.isEmpty()) {
+				return;
+			}
 
-		if (message == null || message.isEmpty()) {
-			return;
-		}
+			ActivityObject object = activityFactory.object();
+			object.setType(ActivityObject.STATUS_UPDATE);
+			object.addContent(atomFactory.content(message, "text/plain", null));
 
-		ActivityObject object = activityFactory.object();
-		object.setType(ActivityObject.STATUS_UPDATE);
-		object.addContent(atomFactory.content(message, "text/plain", null));
+			ActivityEntry entry = activityFactory.entry();
+			entry.setPublished(Calendar.getInstance().getTime());
+			entry.addVerb(activityFactory.verb(ActivityVerb.POST));
+			entry.addObject(object);
+			entry.setAclRules(defaultRules);
+			entry.setTitle(message);
 
-		ActivityEntry entry = activityFactory.entry();
-		entry.setPublished(Calendar.getInstance().getTime());
-		entry.addVerb(activityFactory.verb(ActivityVerb.POST));
-		entry.addObject(object);
-		entry.setAclRules(defaultRules);
-		entry.setTitle(message);
-
-		try {
-			service.postActivity(entry);
-		} catch (RequestException e) {
-			e.printStackTrace();
-		}
+			try {
+				service.postActivity(entry);
+			} catch (RequestException e) {
+				e.printStackTrace();
+			}
 	}
 
 	public void privacy() throws IOException {
@@ -1136,6 +1143,27 @@ public class ConsoleClient implements InboxEventHandler {
 
 		out.print(buf);
 		out.flush();
+	}
+	
+	public void delete() throws ConnectionRequired, AuthenticationRequired
+	{		
+		List<ActivityEntry> activities=inbox.getEntries();		
+		
+		//We simple select the last activity posted by this user, for testing 
+		//purposes only. 
+		//TO-DO: check that the last activity really belongs to this user!
+		ActivityEntry activity=null;
+		if ((activities!=null) && (activities.size()>0))
+			activity = activities.get(0);
+		
+		try {
+			if (activity!=null){
+				service.deleteActivity(activity.getId());
+				inbox.refresh();
+			}
+		} catch (RequestException e) {
+			e.printStackTrace();
+		}				
 	}
 
 	/**
