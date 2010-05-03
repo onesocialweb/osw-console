@@ -163,7 +163,7 @@ public class ConsoleClient implements InboxEventHandler {
 			new Command("clear", "key", "remove all entries with given key from the profile"),
 			new Command("relation", "[add|update] [id]", "add or update a relation"),
 			new Command("upload", "", "display an upload token"),
-			new Command("delete", "", "delete the last activity posted by this user"),
+			new Command("delete", "activityNr", "delete the last activity posted by this user"),
 			new Command("quit", "", "quit the client"));
 
 	/**
@@ -417,8 +417,8 @@ public class ConsoleClient implements InboxEventHandler {
 					badArgs(cmd);
 				}
 			}else if (cmd.equals("delete")) {
-				if (args.size() == 0) {
-					delete();
+				if (args.size() == 1) {
+					delete(args.get(0));
 				} else {
 					badArgs(cmd);
 				}
@@ -1012,10 +1012,11 @@ public class ConsoleClient implements InboxEventHandler {
 		buf.append(ANSIBuffer.ANSICodes.gotoxy(1, 1));
 		buf.append(((char) 27) + "[J");
 
+		int i=1;
 		// Paint the activities
 		if (activities != null && !activities.isEmpty()) {
 			for (ActivityEntry activity : activities) {
-				buf.append(render(activity));
+				buf.append("(" + i++ + ") " +render(activity));
 			}
 		}
 
@@ -1145,16 +1146,20 @@ public class ConsoleClient implements InboxEventHandler {
 		out.flush();
 	}
 	
-	public void delete() throws ConnectionRequired, AuthenticationRequired
+	public void delete(String actNr) throws ConnectionRequired, AuthenticationRequired
 	{		
+		int intActNr=Integer.parseInt(actNr);
 		List<ActivityEntry> activities=inbox.getEntries();		
 		
-		//We simple select the last activity posted by this user, for testing 
-		//purposes only. 
-		//TO-DO: check that the last activity really belongs to this user!
+		if (activities==null)
+			return;
+		
+		if ((intActNr<0) || (intActNr>activities.size()))
+				return;
+		
 		ActivityEntry activity=null;
-		if ((activities!=null) && (activities.size()>0))
-			activity = activities.get(0);
+		if (activities.size()>0)
+			activity = activities.get(intActNr-1);
 		
 		try {
 			if (activity!=null){
