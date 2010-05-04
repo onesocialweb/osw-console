@@ -163,7 +163,8 @@ public class ConsoleClient implements InboxEventHandler {
 			new Command("clear", "key", "remove all entries with given key from the profile"),
 			new Command("relation", "[add|update] [id]", "add or update a relation"),
 			new Command("upload", "", "display an upload token"),
-			new Command("delete", "activityNr", "delete the last activity posted by this user"),
+			new Command("delete", "activityNr", "delete the activity selected if posted by this user"),
+			new Command("update", "activityNr", "edits the activity selected if posted by this user"),
 			new Command("quit", "", "quit the client"));
 
 	/**
@@ -419,6 +420,12 @@ public class ConsoleClient implements InboxEventHandler {
 			}else if (cmd.equals("delete")) {
 				if (args.size() == 1) {
 					delete(args.get(0));
+				} else {
+					badArgs(cmd);
+				}
+			}else if (cmd.equals("update")) {
+				if (args.size() == 1) {
+					updateActivity(args.get(0));
 				} else {
 					badArgs(cmd);
 				}
@@ -1146,7 +1153,7 @@ public class ConsoleClient implements InboxEventHandler {
 		out.flush();
 	}
 	
-	public void delete(String actNr) throws ConnectionRequired, AuthenticationRequired
+	private void delete(String actNr) throws ConnectionRequired, AuthenticationRequired
 	{		
 		int intActNr=Integer.parseInt(actNr);
 		List<ActivityEntry> activities=inbox.getEntries();		
@@ -1169,6 +1176,41 @@ public class ConsoleClient implements InboxEventHandler {
 		} catch (RequestException e) {
 			e.printStackTrace();
 		}				
+	}
+	
+	private void updateActivity(String actNr) throws ConnectionRequired, AuthenticationRequired
+	{		
+		String newStatus=new String();
+		// First get the new status message for the activity
+		String prompt = reader.getDefaultPrompt();
+		try {
+			newStatus = reader.readLine("New message for the activity: ");
+		} catch (IOException e) {
+			newStatus = "";
+		}
+		int intActNr=Integer.parseInt(actNr);
+		List<ActivityEntry> activities=inbox.getEntries();		
+		
+		if (activities==null)
+			return;
+		
+		if ((intActNr<0) || (intActNr>activities.size()))
+				return;
+		
+		ActivityEntry activity=null;
+		if (activities.size()>0)
+			activity = activities.get(intActNr-1);
+		
+		try {
+			if (activity!=null){
+				activity.setTitle(newStatus);
+				service.updateActivity(activity);
+				inbox.refresh();
+			}
+		} catch (RequestException e) {
+			e.printStackTrace();
+		} 				
+		reader.setDefaultPrompt(prompt);
 	}
 
 	/**
