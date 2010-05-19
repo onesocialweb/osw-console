@@ -1,5 +1,4 @@
 /*
- *  Copyright 2010 Vodafone Group Services Ltd.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -163,6 +162,8 @@ public class ConsoleClient implements InboxEventHandler {
 			new Command("upload", "", "display an upload token"),
 			new Command("delete", "activityNr", "delete the activity selected if posted by this user"),
 			new Command("update", "activityNr", "edits the activity selected if posted by this user"),
+			new Command("comment", "activityNr", "comments on the activity selected"),
+			new Command("replies", "activityNr", "lists the replies of the activity selected"),
 			new Command("quit", "", "quit the client"));
 
 	/**
@@ -427,7 +428,20 @@ public class ConsoleClient implements InboxEventHandler {
 				} else {
 					badArgs(cmd);
 				}
-			} else if (cmd.equals("relation")) {
+			}else if (cmd.equals("comment")) {
+				if (args.size() == 1) {
+					commentActivity(args.get(0));
+				} else {
+					badArgs(cmd);
+				}				
+			} else if (cmd.equals("replies")) {
+				if (args.size() == 1) {
+					queryReplies(args.get(0));
+				} else {
+					badArgs(cmd);
+				}
+			}
+			else if (cmd.equals("relation")) {
 				if (args.size() > 0) {
 					if (args.get(0).equals("add")) {
 						if (args.size() == 1) {
@@ -1021,7 +1035,10 @@ public class ConsoleClient implements InboxEventHandler {
 		// Paint the activities
 		if (activities != null && !activities.isEmpty()) {
 			for (ActivityEntry activity : activities) {
-				buf.append("(" + i++ + ") " +render(activity));
+				buf.append("(" + i++ + ") ");
+				if (activity.hasReplies())
+					buf.append("(Replies : " + activity.getRepliesLink().getCount() + ") ");
+				buf.append(render(activity));
 			}
 		}
 
@@ -1210,6 +1227,78 @@ public class ConsoleClient implements InboxEventHandler {
 		} 				
 		reader.setDefaultPrompt(prompt);
 	}
+	
+	private void commentActivity(String actNr) throws ConnectionRequired, AuthenticationRequired
+	{	
+		String comment=new String();
+		// First get the comment message for the activity
+		String prompt = reader.getDefaultPrompt();
+		try {
+			comment = reader.readLine("Enter your comment: ");
+		} catch (IOException e) {
+			comment = "";
+		}		
+		if (comment.length()==0)
+			return;
+		
+		int intActNr=Integer.parseInt(actNr);
+		List<ActivityEntry> activities=inbox.getEntries();		
+		
+		if (activities==null)
+			return;		
+		if ((intActNr<=0) || (intActNr>activities.size()))
+				return;
+		
+		ActivityEntry activity=null;
+		if (activities.size()>0)
+			activity = activities.get(intActNr-1);
+				
+		
+		ActivityObject object = activityFactory.object();
+		object.setType(ActivityObject.COMMENT);
+		object.addContent(atomFactory.content(comment, "text/plain", null));
+
+		ActivityEntry commentEntry = activityFactory.entry();
+		commentEntry.setPublished(Calendar.getInstance().getTime());
+		commentEntry.addVerb(activityFactory.verb(ActivityVerb.POST));
+		commentEntry.addObject(object);
+		commentEntry.setAclRules(defaultRules);
+		commentEntry.setTitle(comment);
+		commentEntry.setParentId(activity.getId());
+		commentEntry.setParentJID(activity.getActor().getUri());
+		
+		try {
+			service.postActivity(commentEntry);
+		} catch (RequestException e) {
+			e.printStackTrace();
+		}
+		
+		reader.setDefaultPrompt(prompt);
+	}
+	
+	private void queryReplies(String actNr) throws ConnectionRequired, AuthenticationRequired
+	{	
+		int intActNr=Integer.parseInt(actNr);
+		List<ActivityEntry> activities=inbox.getEntries();		
+		
+		if (activities==null)
+			return;		
+		if ((intActNr<=0) || (intActNr>activities.size()))
+				return;
+		
+		ActivityEntry activity=null;
+		if (activities.size()>0)
+			activity = activities.get(intActNr-1);
+		
+		try {
+			List<ActivityEntry> replies =service.getReplies(activity);
+			renderActivities(replies);
+		} catch (RequestException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
 
 	/**
 	 * Extract the command from a command line String.
