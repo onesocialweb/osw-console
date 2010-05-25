@@ -28,9 +28,12 @@ package org.onesocialweb.client.console;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -39,7 +42,6 @@ import jline.Completor;
 import jline.ConsoleReader;
 
 import org.onesocialweb.client.Inbox;
-import org.onesocialweb.client.InboxEvent;
 import org.onesocialweb.client.InboxEventHandler;
 import org.onesocialweb.client.OswService;
 import org.onesocialweb.client.OswServiceFactory;
@@ -62,12 +64,17 @@ import org.onesocialweb.model.atom.DefaultAtomFactory;
 import org.onesocialweb.model.relation.DefaultRelationFactory;
 import org.onesocialweb.model.relation.Relation;
 import org.onesocialweb.model.relation.RelationFactory;
+import org.onesocialweb.model.vcard4.BirthdayField;
 import org.onesocialweb.model.vcard4.DefaultVCard4Factory;
+import org.onesocialweb.model.vcard4.EmailField;
 import org.onesocialweb.model.vcard4.Field;
 import org.onesocialweb.model.vcard4.FullNameField;
 import org.onesocialweb.model.vcard4.NoteField;
 import org.onesocialweb.model.vcard4.PhotoField;
 import org.onesocialweb.model.vcard4.Profile;
+import org.onesocialweb.model.vcard4.TelField;
+import org.onesocialweb.model.vcard4.TimeZoneField;
+import org.onesocialweb.model.vcard4.URLField;
 import org.onesocialweb.model.vcard4.VCard4Factory;
 import org.onesocialweb.model.vcard4.exception.CardinalityException;
 import org.onesocialweb.model.vcard4.exception.UnsupportedFieldException;
@@ -154,6 +161,8 @@ public class ConsoleClient implements InboxEventHandler {
 			new Command("clear", "key", "remove all entries with given key from the profile"),
 			new Command("relation", "[add|update] [id]", "add or update a relation"),
 			new Command("upload", "", "display an upload token"),
+			new Command("delete", "activityNr", "delete the activity selected if posted by this user"),
+			new Command("update", "activityNr", "edits the activity selected if posted by this user"),
 			new Command("quit", "", "quit the client"));
 
 	/**
@@ -406,6 +415,18 @@ public class ConsoleClient implements InboxEventHandler {
 				} else {
 					badArgs(cmd);
 				}
+			}else if (cmd.equals("delete")) {
+				if (args.size() == 1) {
+					delete(args.get(0));
+				} else {
+					badArgs(cmd);
+				}
+			}else if (cmd.equals("update")) {
+				if (args.size() == 1) {
+					updateActivity(args.get(0));
+				} else {
+					badArgs(cmd);
+				}
 			} else if (cmd.equals("relation")) {
 				if (args.size() > 0) {
 					if (args.get(0).equals("add")) {
@@ -443,6 +464,8 @@ public class ConsoleClient implements InboxEventHandler {
 
 	private void connect(String server, Integer port) {
 		try {
+			service.setCompressionEnabled(false);
+			service.setReconnectionAllowed(true);
 			service.connect(server, port, null);
 		} catch (ConnectionException e) {
 			e.printStackTrace();
@@ -670,7 +693,30 @@ public class ConsoleClient implements InboxEventHandler {
 			} catch (CardinalityException e) {
 				e.printStackTrace();
 			}
-		} else if (key.equals(FullNameField.NAME)) {
+		} else if (key.equals(BirthdayField.NAME)) {
+			String value = reader.readLine("Birthday :");
+			Field field = profileFactory.birthday();
+			try {
+				Date date=new SimpleDateFormat("dd/MM/yyyy").parse(value);
+				 field = profileFactory.birthday(date);
+			}catch (ParseException e)
+			{			
+			}
+			
+			field.setAclRules(defaultRules);
+			
+			if (profile.hasField(BirthdayField.NAME)) {
+				profile.removeField(profile.getField(BirthdayField.NAME));
+			}
+			
+			try {
+				profile.addField(field);
+			} catch (UnsupportedFieldException e) {
+				e.printStackTrace();
+			} catch (CardinalityException e) {
+				e.printStackTrace();
+			}
+		}	else if (key.equals(FullNameField.NAME)) {
 			String value = reader.readLine("Display name :");
 			Field field = profileFactory.fullname(value);
 			field.setAclRules(defaultRules);
@@ -686,7 +732,8 @@ public class ConsoleClient implements InboxEventHandler {
 			} catch (CardinalityException e) {
 				e.printStackTrace();
 			}
-		}  else if (key.equals(NoteField.NAME)) {
+		} 
+		else if (key.equals(NoteField.NAME)) {
 			String value = reader.readLine("Bio :");
 			Field field = profileFactory.note(value);
 			field.setAclRules(defaultRules);
@@ -702,7 +749,71 @@ public class ConsoleClient implements InboxEventHandler {
 			} catch (CardinalityException e) {
 				e.printStackTrace();
 			}
-		}
+		}  else if (key.equals(URLField.NAME)) {
+			String value = reader.readLine("Url :");
+			Field field = profileFactory.url(value);
+			field.setAclRules(defaultRules);
+			
+			if (profile.hasField(URLField.NAME)) {
+				profile.removeField(profile.getField(URLField.NAME));
+			}
+			
+			try {
+				profile.addField(field);
+			} catch (UnsupportedFieldException e) {
+				e.printStackTrace();
+			} catch (CardinalityException e) {
+				e.printStackTrace();
+			}
+		}  else if (key.equals(TimeZoneField.NAME)) {
+			String value = reader.readLine("TimeZone :");
+			Field field = profileFactory.timeZone(value);
+			field.setAclRules(defaultRules);
+			
+			if (profile.hasField(TimeZoneField.NAME)) {
+				profile.removeField(profile.getField(TimeZoneField.NAME));
+			}
+			
+			try {
+				profile.addField(field);
+			} catch (UnsupportedFieldException e) {
+				e.printStackTrace();
+			} catch (CardinalityException e) {
+				e.printStackTrace();
+			}
+		} else if (key.equals(EmailField.NAME)) {
+			String value = reader.readLine("Email :");
+			Field field = profileFactory.email(value);
+			field.setAclRules(defaultRules);
+			
+			if (profile.hasField(EmailField.NAME)) {
+				profile.removeAll(EmailField.NAME);
+			}
+			
+			try {
+				profile.addField(field);
+			} catch (UnsupportedFieldException e) {
+				e.printStackTrace();
+			} catch (CardinalityException e) {
+				e.printStackTrace();
+			}
+		}  else if (key.equals(TelField.NAME)) {
+			String value = reader.readLine("Tel :");
+			Field field = profileFactory.tel(value);
+			field.setAclRules(defaultRules);
+			
+			if (profile.hasField(TelField.NAME)) {
+				profile.removeAll(TelField.NAME);
+			}
+			
+			try {
+				profile.addField(field);
+			} catch (UnsupportedFieldException e) {
+				e.printStackTrace();
+			} catch (CardinalityException e) {
+				e.printStackTrace();
+			}
+		}  			
 		
 		try {
 			service.setProfile(profile);
@@ -759,28 +870,27 @@ public class ConsoleClient implements InboxEventHandler {
 
 	}
 	
-	private void updateStatus(String message) throws ConnectionRequired, AuthenticationRequired {
+		private void updateStatus(String message) throws ConnectionRequired, AuthenticationRequired {
+			if (message == null || message.isEmpty()) {
+				return;
+			}
 
-		if (message == null || message.isEmpty()) {
-			return;
-		}
+			ActivityObject object = activityFactory.object();
+			object.setType(ActivityObject.STATUS_UPDATE);
+			object.addContent(atomFactory.content(message, "text/plain", null));
 
-		ActivityObject object = activityFactory.object();
-		object.setType(ActivityObject.STATUS_UPDATE);
-		object.addContent(atomFactory.content(message, "text/plain", null));
+			ActivityEntry entry = activityFactory.entry();
+			entry.setPublished(Calendar.getInstance().getTime());
+			entry.addVerb(activityFactory.verb(ActivityVerb.POST));
+			entry.addObject(object);
+			entry.setAclRules(defaultRules);
+			entry.setTitle(message);
 
-		ActivityEntry entry = activityFactory.entry();
-		entry.setPublished(Calendar.getInstance().getTime());
-		entry.addVerb(activityFactory.verb(ActivityVerb.POST));
-		entry.addObject(object);
-		entry.setAclRules(defaultRules);
-		entry.setTitle(message);
-
-		try {
-			service.postActivity(entry);
-		} catch (RequestException e) {
-			e.printStackTrace();
-		}
+			try {
+				service.postActivity(entry);
+			} catch (RequestException e) {
+				e.printStackTrace();
+			}
 	}
 
 	public void privacy() throws IOException {
@@ -907,10 +1017,11 @@ public class ConsoleClient implements InboxEventHandler {
 		buf.append(ANSIBuffer.ANSICodes.gotoxy(1, 1));
 		buf.append(((char) 27) + "[J");
 
+		int i=1;
 		// Paint the activities
 		if (activities != null && !activities.isEmpty()) {
 			for (ActivityEntry activity : activities) {
-				buf.append(render(activity));
+				buf.append("(" + i++ + ") " +render(activity));
 			}
 		}
 
@@ -1039,6 +1150,66 @@ public class ConsoleClient implements InboxEventHandler {
 		out.print(buf);
 		out.flush();
 	}
+	
+	private void delete(String actNr) throws ConnectionRequired, AuthenticationRequired
+	{		
+		int intActNr=Integer.parseInt(actNr);
+		List<ActivityEntry> activities=inbox.getEntries();		
+		
+		if (activities==null)
+			return;
+		
+		if ((intActNr<0) || (intActNr>activities.size()))
+				return;
+		
+		ActivityEntry activity=null;
+		if (activities.size()>0)
+			activity = activities.get(intActNr-1);
+		
+		try {
+			if (activity!=null){
+				service.deleteActivity(activity.getId());
+				inbox.refresh();
+			}
+		} catch (RequestException e) {
+			e.printStackTrace();
+		}				
+	}
+	
+	private void updateActivity(String actNr) throws ConnectionRequired, AuthenticationRequired
+	{		
+		String newStatus=new String();
+		// First get the new status message for the activity
+		String prompt = reader.getDefaultPrompt();
+		try {
+			newStatus = reader.readLine("New message for the activity: ");
+		} catch (IOException e) {
+			newStatus = "";
+		}
+		int intActNr=Integer.parseInt(actNr);
+		List<ActivityEntry> activities=inbox.getEntries();		
+		
+		if (activities==null)
+			return;
+		
+		if ((intActNr<0) || (intActNr>activities.size()))
+				return;
+		
+		ActivityEntry activity=null;
+		if (activities.size()>0)
+			activity = activities.get(intActNr-1);
+		
+		try {
+			if (activity!=null){
+				activity.setTitle(newStatus);
+				service.updateActivity(activity);
+				inbox.refresh();
+			}
+		} catch (RequestException e) {
+			e.printStackTrace();
+		} 				
+		reader.setDefaultPrompt(prompt);
+	}
 
 	/**
 	 * Extract the command from a command line String.
@@ -1094,7 +1265,17 @@ public class ConsoleClient implements InboxEventHandler {
 	}
 
 	@Override
-	public void handleEvent(InboxEvent event) {
-		render();
+	public void onMessageDeleted(ActivityEntry entry) {
+		render();	
+	}
+
+	@Override
+	public void onMessageReceived(ActivityEntry entry) {
+		render();	
+	}
+
+	@Override
+	public void onRefresh(List<ActivityEntry> activities) {
+		render();	
 	}
 }

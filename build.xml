@@ -11,10 +11,14 @@
 
     <property name="main-class"  value="org.onesocialweb.client.console.ConsoleClient"/>
 
+	<property file="${user.home}/.ant.build.properties" />
     <property file="${basedir}/build.properties"/>
+	
+	<fail unless="onesocialweb.libs">Aborting. The Ant property "onesocialweb.libs" is not defined. Check the onesocialweb wiki (Building with Ant) for more details on this error.</fail>	
 	
     <path id="classpath">
         <fileset dir="${lib.dir}" includes="**/*.jar"/>
+    	<fileset dir="${onesocialweb.libs}" includes="**/*.jar"/>    	
     </path>
 
     <target name="clean">
@@ -30,6 +34,8 @@
         <mkdir dir="${jar.dir}"/>
         <jar destfile="${jar.dir}/${jar.name}.jar" basedir="${classes.dir}">
             <zipgroupfileset dir="${lib.dir}" includes="*.jar"/>
+            <zipgroupfileset dir="${onesocialweb.libs}" includes="osw-model.jar"/>
+            <zipgroupfileset dir="${onesocialweb.libs}" includes="osw-lib-java.jar"/>
             <manifest>
                 <attribute name="Main-Class" value="${main-class}"/>
             </manifest>
