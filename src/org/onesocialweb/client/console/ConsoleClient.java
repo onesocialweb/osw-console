@@ -1278,4 +1278,9 @@ public class ConsoleClient implements InboxEventHandler {
 	public void onRefresh(List<ActivityEntry> activities) {
 		render();	
 	}
+
+	@Override
+	public void onMessageUpdated(ActivityEntry entry) {
+		render();
+	}
 }
