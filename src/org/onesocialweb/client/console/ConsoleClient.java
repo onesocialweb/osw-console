@@ -69,6 +69,7 @@ import org.onesocialweb.model.vcard4.DefaultVCard4Factory;
 import org.onesocialweb.model.vcard4.EmailField;
 import org.onesocialweb.model.vcard4.Field;
 import org.onesocialweb.model.vcard4.FullNameField;
+import org.onesocialweb.model.vcard4.GenderField;
 import org.onesocialweb.model.vcard4.NoteField;
 import org.onesocialweb.model.vcard4.PhotoField;
 import org.onesocialweb.model.vcard4.Profile;
@@ -716,7 +717,48 @@ public class ConsoleClient implements InboxEventHandler {
 			} catch (CardinalityException e) {
 				e.printStackTrace();
 			}
-		}	else if (key.equals(FullNameField.NAME)) {
+		}  
+		else if (key.equals(GenderField.NAME)) {
+			String value = reader.readLine("Gender :");
+			Field field = profileFactory.gender();
+			try {
+				 int gender=Integer.parseInt(value);
+				 switch (gender) {
+				case 0:
+					field = profileFactory.gender(GenderField.Type.NOTKNOWN);;
+					break;
+				case 1:
+					field = profileFactory.gender(GenderField.Type.MALE);;
+					break;
+				case 2:
+					field = profileFactory.gender(GenderField.Type.FEMALE);;
+					break;
+				case 3:
+					field = profileFactory.gender(GenderField.Type.NOTAPPLICABLE);;
+					break;
+				}
+				 
+			}catch (Exception e)
+			{			
+				e.printStackTrace();
+			}
+			
+			field.setAclRules(defaultRules);
+			
+			if (profile.hasField(GenderField.NAME)) {
+				profile.removeField(profile.getField(GenderField.NAME));
+			}
+			
+			try {
+				profile.addField(field);
+			} catch (UnsupportedFieldException e) {
+				e.printStackTrace();
+			} catch (CardinalityException e) {
+				e.printStackTrace();
+			}
+		}	
+		
+		else if (key.equals(FullNameField.NAME)) {
 			String value = reader.readLine("Display name :");
 			Field field = profileFactory.fullname(value);
 			field.setAclRules(defaultRules);
