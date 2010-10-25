@@ -1259,10 +1259,20 @@ public class ConsoleClient implements InboxEventHandler {
 			activity = activities.get(intActNr-1);
 		
 		try {
-			if (activity!=null){
+			if (activity!=null){				
 				activity.setTitle(newStatus);
+				//we update the object content too...
+				for (ActivityObject object : activity.getObjects()){
+					if (object.getType().equals(ActivityObject.STATUS_UPDATE)){					
+						activity.getObjects().remove(object);
+						object = activityFactory.object();
+						object.setType(ActivityObject.STATUS_UPDATE);
+						object.addContent(atomFactory.content(newStatus, "text/plain", null));
+						activity.addObject(object);
+					}
+				}		
 				service.updateActivity(activity);
-				inbox.refresh();
+				//inbox.refresh();
 			}
 		} catch (RequestException e) {
 			e.printStackTrace();
@@ -1310,7 +1320,7 @@ public class ConsoleClient implements InboxEventHandler {
 		commentEntry.setParentJID(activity.getActor().getUri());
 		
 		try {
-			service.postActivity(commentEntry);
+			service.postComment(commentEntry);
 		} catch (RequestException e) {
 			e.printStackTrace();
 		}
