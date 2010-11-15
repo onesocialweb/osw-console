@@ -40,6 +40,8 @@ import jline.ANSIBuffer;
 import jline.Completor;
 import jline.ConsoleReader;
 
+import org.jivesoftware.smackx.FormField;
+import org.jivesoftware.smackx.packet.DataForm;
 import org.onesocialweb.client.Inbox;
 import org.onesocialweb.client.InboxEventHandler;
 import org.onesocialweb.client.OswService;
@@ -497,24 +499,53 @@ public class ConsoleClient implements InboxEventHandler {
 		out.println("You have been successfully disconected");
 	}
 
-	private void register() throws ConnectionRequired {
 
-		String email, username, name, password;
-
+private void register() throws ConnectionRequired {
+		
+		List<FormField> inputFields= new ArrayList<FormField>();
 		// Ask the user for data
 		String prompt = reader.getDefaultPrompt();
-		try {
-			username = reader.readLine("Username: ");
-			name = reader.readLine("Name: ");
-			email = reader.readLine("Email: ");
-			password = reader.readLine("Password: ", new Character('*'));
+		
+		DataForm form =service.requestForm();
+		
+		//we print the instructions provided by the server to aid the user...
+		Iterator<String> instructions= form.getInstructions();
+		for (;instructions.hasNext();){
+			out.println(instructions.next());
+		}
+		
+		Iterator<FormField> it= form.getFields();
+		String fieldValue="";
+		
+		//next we iterate through the fields of the registration form
+		try {							
+			for ( ;it.hasNext();){
+				FormField ff= it.next();
+				if (ff.getLabel()!=null){
+					if (ff.getLabel().trim().equalsIgnoreCase("password")){
+						fieldValue= reader.readLine(ff.getLabel()+":", new Character('*'));
+					} else
+						fieldValue= reader.readLine(ff.getLabel()+":");
+					ff.addValue(fieldValue);
+					inputFields.add(ff);
+				}				
+			}
 		} catch (IOException e) {
 			return;
 		}
+				
+
 		reader.setDefaultPrompt(prompt);
 
 		// Prepare the request
-		service.register(username, password, name, email);
+		boolean success=service.register(inputFields);
+		
+		if (success){			
+			out.println("New user successfully created");
+		}		
+		else{
+			out.println("Error in Registration. User not created");
+		}
 	}
 	
 	private void login (String username, String password) throws ConnectionRequired
