@@ -1455,4 +1455,9 @@ private void register() throws ConnectionRequired {
 	public void onMessageUpdated(ActivityEntry entry) {
 		render();
 	}
+
+	@Override
+	public void onReplyAdded(ActivityEntry entry) {	
+		render();
+	}
 }
